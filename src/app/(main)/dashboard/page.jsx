@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import withAuth from "@/app/utils/isAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Calendar, Trophy } from "lucide-react";
 import {
@@ -11,51 +13,55 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import api from "@/api/api";
+function DashboardPage() {
+  const [scores, setScores] = useState({
+    totalQuizzes: 0,
+    avgScore: 0,
+    highestPercentage: 0,
+    quizzesThisWeek: 0,
+  });
+  const [analytics, setAnalytics] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default function DashboardPage() {
-  const quizzes = [
-    {
-      id: 1,
-      title: "JavaScript Basics",
-      score: 8,
-      total: 10,
-      date: "2023-04-15",
-    },
-    {
-      id: 2,
-      title: "React Fundamentals",
-      score: 2,
-      total: 10,
-      date: "2023-04-18",
-    },
-    { id: 3, title: "CSS Flexbox", score: 7, total: 10, date: "2023-04-20" },
-    {
-      id: 4,
-      title: "Python for Beginners",
-      score: 8,
-      total: 10,
-      date: "2023-04-22",
-    },
-    {
-      id: 5,
-      title: "Data Structures",
-      score: 9,
-      total: 10,
-      date: "2023-04-25",
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [scoresRes, analyticsRes] = await Promise.all([
+          api.get("/analytics/generateScores"),
+          api.get("/analytics/generateAnalytics"),
+        ]);
 
-  const performanceData = [
-    { date: "2023-04-01", score: 70 },
-    { date: "2023-04-05", score: 75 },
-    { date: "2023-04-10", score: 80 },
-    { date: "2023-04-15", score: 85 },
-    { date: "2023-04-20", score: 78 },
-    { date: "2023-04-25", score: 95 },
-    { date: "2023-04-30", score: 90 },
-  ];
+        // Directly access data without .json()
+        setScores(scoresRes.data);
+        setAnalytics(analyticsRes.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const performanceData = analytics
+    .map((item) => ({
+      date: new Date(item.createdAt).toLocaleDateString(),
+      score: item.percentage,
+    }))
+    .reverse();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
+    // Rest of the component remains the same
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -63,28 +69,28 @@ export default function DashboardPage() {
             <div className="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4 my-6">
               <StatCard
                 title="Total Quizzes"
-                value="15"
+                value={scores.totalQuizzes.toString()}
                 icon={
                   <Calendar className="h-8 w-8 text-blue-500 dark:text-blue-400" />
                 }
               />
               <StatCard
                 title="Average Score"
-                value="87%"
+                value={`${Math.round(scores.avgPercentage)}%`}
                 icon={
                   <Trophy className="h-8 w-8 text-yellow-500 dark:text-yellow-400" />
                 }
               />
               <StatCard
                 title="Quizzes This Week"
-                value="3"
+                value={scores.quizzesThisWeek.toString()}
                 icon={
                   <BarChart className="h-8 w-8 text-green-500 dark:text-green-400" />
                 }
               />
               <StatCard
                 title="Highest Score"
-                value="95%"
+                value={`${Math.round(scores.highestPercentage)}%`}
                 icon={
                   <Trophy className="h-8 w-8 text-red-500 dark:text-red-400" />
                 }
@@ -99,8 +105,18 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {quizzes.map((quiz) => (
-                      <QuizScoreCard key={quiz.id} quiz={quiz} />
+                    {analytics.map((quiz) => (
+                      <QuizScoreCard
+                        key={quiz.id}
+                        quiz={{
+                          id: quiz.id,
+                          topic: quiz.topic,
+                          subtopic: quiz.subTopic,
+                          score: quiz.correctAnswers,
+                          total: quiz.totalQuestions,
+                          date: new Date(quiz.createdAt).toLocaleDateString(),
+                        }}
+                      />
                     ))}
                   </div>
                 </CardContent>
@@ -125,7 +141,11 @@ export default function DashboardPage() {
                           stroke="#9CA3AF"
                           tick={{ fill: "#9CA3AF" }}
                         />
-                        <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
+                        <YAxis
+                          stroke="#9CA3AF"
+                          tick={{ fill: "#9CA3AF" }}
+                          domain={[0, 100]}
+                        />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: "#1F2937",
@@ -158,10 +178,11 @@ export default function DashboardPage() {
   );
 }
 
+// StatCard and QuizScoreCard components remain the same
 function StatCard({ title, value, icon }) {
   return (
-    <Card className="dark:bg-slate-800 ">
-      <CardContent className="flex items-center mt-4 ">
+    <Card className="dark:bg-slate-800">
+      <CardContent className="flex items-center mt-4">
         <div className="mr-4">{icon}</div>
         <div>
           <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -180,23 +201,21 @@ function QuizScoreCard({ quiz }) {
   const percentage = (quiz.score / quiz.total) * 100;
   let bgColor;
   if (percentage >= 75) {
-    bgColor = "text-green-600 dark:text-green-500 ";
+    bgColor = "text-green-600 dark:text-green-500";
   } else if (percentage < 50) {
-    bgColor = "text-red-500 dark:text-red-500 ";
+    bgColor = "text-red-500 dark:text-red-500";
   } else {
     bgColor = "text-yellow-400 dark:text-yellow-300";
   }
 
   return (
-    <Card
-      className={`dark:bg-gray-700 transition-colors duration-200  shadow-xl`}
-    >
+    <Card className="dark:bg-gray-700 transition-colors duration-200 shadow-xl">
       <CardContent className="p-4">
-        <h3
-          className={`font-semibold text-gray-800 dark:text-gray-100 mb-2 truncate `}
-        >
-          {quiz.title}
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 truncate">
+          {quiz.topic}
         </h3>
+        <h2>{quiz.subtopic}</h2>
+        <h2>{}</h2>
         <div className="flex justify-between items-center">
           <span
             className={`text-2xl font-bold text-gray-900 dark:text-gray-50 ${bgColor}`}
@@ -211,3 +230,5 @@ function QuizScoreCard({ quiz }) {
     </Card>
   );
 }
+
+export default withAuth(DashboardPage);

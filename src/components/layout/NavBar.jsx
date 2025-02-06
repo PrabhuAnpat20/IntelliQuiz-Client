@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Command,
   ChevronDown,
@@ -15,13 +15,26 @@ import {
   Moon,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import api from "@/api/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const pathname = usePathname();
-  if (pathname === "/auth") return null;
+  const router = useRouter();
+  const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Get username from local storage
+  const username = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("username") || "User";
+    }
+    return "User";
+  })[0];
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -29,12 +42,54 @@ const Navbar = () => {
     { name: "My Quizes", href: "/myQuizes" },
   ];
 
+  const handleSignOut = async () => {
+    try {
+      setIsLoggingOut(true);
+
+      const response = await api.delete("/user/signout");
+
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
+
+      toast({
+        title: "Logged Out Successfully",
+        description: "You have been logged out of your account.",
+        className: "bg-green-500 text-white border-none",
+      });
+
+      router.push("/auth");
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      toast({
+        title: "Logout Error",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
+      router.push("/auth");
+    } finally {
+      setIsLoggingOut(false);
+      setIsProfileOpen(false);
+    }
+  };
+
+  // Early return after all hooks are declared
+  if (pathname === "/auth") {
+    return null;
+  }
+
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-md transition-colors duration-200 sticky top-0 z-50">
-      <div className=" mx-8 px-4 sm:px-6 lg:px-8">
+      {/* Rest of the component remains the same */}
+      <div className="mx-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center mt-4">
-            <Image src={"/logo.png"} width={300} height={50} />
+            <Image src={"/logo.png"} width={300} height={50} alt="Logo" />
           </div>
 
           {/* Desktop Navigation */}
@@ -77,7 +132,7 @@ const Navbar = () => {
                   alt="Profile"
                 />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  John Doe
+                  {username}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
@@ -96,13 +151,14 @@ const Navbar = () => {
                     <User className="mr-3 h-4 w-4" />
                     Your Profile
                   </Link>
-                  <a
-                    href="/auth"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  <button
+                    onClick={handleSignOut}
+                    disabled={isLoggingOut}
+                    className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
                     <LogOut className="mr-3 h-4 w-4" />
-                    Sign out
-                  </a>
+                    {isLoggingOut ? "Signing out..." : "Sign out"}
+                  </button>
                 </div>
               )}
             </div>
@@ -139,13 +195,13 @@ const Navbar = () => {
       <div className={`md:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.name}
               href={link.href}
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               {link.name}
-            </a>
+            </Link>
           ))}
         </div>
         <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
@@ -159,32 +215,29 @@ const Navbar = () => {
             </div>
             <div className="ml-3">
               <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                John Doe
+                {username}
               </div>
               <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                john@example.com
+                {typeof window !== "undefined"
+                  ? localStorage.getItem("email") || "user@example.com"
+                  : "user@example.com"}
               </div>
             </div>
           </div>
           <div className="mt-3 px-2 space-y-1">
-            <a
-              href="#"
+            <Link
+              href="/profile"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Your Profile
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            </Link>
+            <button
+              onClick={handleSignOut}
+              disabled={isLoggingOut}
+              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
-              Settings
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Sign out
-            </a>
+              {isLoggingOut ? "Signing out..." : "Sign out"}
+            </button>
           </div>
         </div>
       </div>

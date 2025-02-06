@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,134 +20,103 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-
-const quizzes = [
-  {
-    id: 1,
-    title: "Variables and Data Types",
-    score: 8,
-    total: 10,
-    date: "2023-04-15",
-    topic: "Programming",
-    subtopic: "JavaScript Basics",
-  },
-  {
-    id: 2,
-    title: "Functions and Scope",
-    score: 7,
-    total: 10,
-    date: "2023-04-16",
-    topic: "Programming",
-    subtopic: "JavaScript Basics",
-  },
-  {
-    id: 3,
-    title: "Components and Props",
-    score: 2,
-    total: 10,
-    date: "2023-04-18",
-    topic: "Web Development",
-    subtopic: "React Fundamentals",
-  },
-  {
-    id: 4,
-    title: "State and Lifecycle",
-    score: 3,
-    total: 10,
-    date: "2023-04-19",
-    topic: "Web Development",
-    subtopic: "React Fundamentals",
-  },
-  {
-    id: 5,
-    title: "Flexbox Layout",
-    score: 7,
-    total: 10,
-    date: "2023-04-20",
-    topic: "Web Development",
-    subtopic: "CSS Flexbox",
-  },
-  {
-    id: 6,
-    title: "Flexbox Alignment",
-    score: 8,
-    total: 10,
-    date: "2023-04-21",
-    topic: "Web Development",
-    subtopic: "CSS Flexbox",
-  },
-  {
-    id: 7,
-    title: "Python Syntax",
-    score: 8,
-    total: 10,
-    date: "2023-04-22",
-    topic: "Programming",
-    subtopic: "Python for Beginners",
-  },
-  {
-    id: 8,
-    title: "Python Functions",
-    score: 7,
-    total: 10,
-    date: "2023-04-23",
-    topic: "Programming",
-    subtopic: "Python for Beginners",
-  },
-  {
-    id: 9,
-    title: "Arrays and Linked Lists",
-    score: 9,
-    total: 10,
-    date: "2023-04-25",
-    topic: "Computer Science",
-    subtopic: "Data Structures",
-  },
-  {
-    id: 10,
-    title: "Trees and Graphs",
-    score: 8,
-    total: 10,
-    date: "2023-04-26",
-    topic: "Computer Science",
-    subtopic: "Data Structures",
-  },
-];
-
-export default function AllQuizzesPage() {
+import api from "@/api/api";
+import withAuth from "@/app/utils/isAuth";
+function AllQuizzesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
+  const [testTypeFilter, setTestTypeFilter] = useState("all");
+  const [tableData, setTableData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const topics = useMemo(
-    () => ["all", ...new Set(quizzes.map((quiz) => quiz.topic))],
-    []
-  );
+  // Memoize topics list
+  const topics = useMemo(() => {
+    if (!tableData.length) return ["all"];
+    return ["all", ...new Set(tableData.map((quiz) => quiz.topic))];
+  }, [tableData]);
 
+  // Memoize test types list
+  const testTypes = useMemo(() => {
+    if (!tableData.length) return ["all"];
+    return ["all", ...new Set(tableData.map((quiz) => quiz.testType))];
+  }, [tableData]);
+
+  // Memoize filtered quizzes
   const filteredQuizzes = useMemo(() => {
-    return quizzes.filter((quiz) => {
+    if (!tableData.length) return [];
+
+    return tableData.filter((quiz) => {
       const matchesSearch =
-        quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.subtopic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.topic.toLowerCase().includes(searchTerm.toLowerCase());
+        quiz.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quiz.subTopic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (quiz.testType &&
+          quiz.testType.toLowerCase().includes(searchTerm.toLowerCase()));
+
       const matchesTopic = topicFilter === "all" || quiz.topic === topicFilter;
+
+      const matchesTestType =
+        testTypeFilter === "all" || quiz.testType === testTypeFilter;
+
       const matchesScore =
         scoreFilter === "all" ||
-        (scoreFilter === "high" && quiz.score / quiz.total >= 0.7) ||
+        (scoreFilter === "high" && quiz.score / quiz.totalQuestions >= 0.7) ||
         (scoreFilter === "medium" &&
-          quiz.score / quiz.total >= 0.4 &&
-          quiz.score / quiz.total < 0.7) ||
-        (scoreFilter === "low" && quiz.score / quiz.total < 0.4);
-      return matchesSearch && matchesTopic && matchesScore;
+          quiz.score / quiz.totalQuestions >= 0.4 &&
+          quiz.score / quiz.totalQuestions < 0.7) ||
+        (scoreFilter === "low" && quiz.score / quiz.totalQuestions < 0.4);
+
+      return matchesSearch && matchesTopic && matchesScore && matchesTestType;
     });
-  }, [searchTerm, topicFilter, scoreFilter]);
+  }, [searchTerm, topicFilter, scoreFilter, testTypeFilter, tableData]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await api.get("/analytics/generateAnalytics");
+        setTableData(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load quiz data. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="bg-white dark:bg-gray-800">
+          <CardContent className="p-4">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="bg-white dark:bg-gray-800">
+          <CardContent className="p-4">
+            <p className="text-gray-600 dark:text-gray-300">
+              Loading quizzes...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-        All Quizzes
-      </h1> */}
-
       <Card className="mb-6 bg-white dark:bg-gray-800">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
@@ -188,6 +157,26 @@ export default function AllQuizzesPage() {
             </div>
             <div className="w-full md:w-1/4">
               <label
+                htmlFor="testType"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Test Type
+              </label>
+              <Select value={testTypeFilter} onValueChange={setTestTypeFilter}>
+                <SelectTrigger id="testType">
+                  <SelectValue placeholder="Filter by test type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {testTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === "all" ? "All Types" : type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-1/4">
+              <label
                 htmlFor="score"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
@@ -221,6 +210,9 @@ export default function AllQuizzesPage() {
                   Subtopic
                 </TableHead>
                 <TableHead className="text-gray-600 dark:text-gray-300">
+                  Test Type
+                </TableHead>
+                <TableHead className="text-gray-600 dark:text-gray-300">
                   Score
                 </TableHead>
                 <TableHead className="text-gray-600 dark:text-gray-300">
@@ -238,18 +230,23 @@ export default function AllQuizzesPage() {
                     {quiz.topic}
                   </TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-300">
-                    {quiz.subtopic}
+                    {quiz.subTopic}
+                  </TableCell>
+                  <TableCell className="text-gray-600 dark:text-gray-300">
+                    {quiz.testType}
                   </TableCell>
                   <TableCell>
-                    <span className={getScoreColor(quiz.score, quiz.total)}>
-                      {quiz.score}/{quiz.total}
+                    <span
+                      className={getScoreColor(quiz.score, quiz.totalQuestions)}
+                    >
+                      {quiz.score}/{quiz.totalQuestions}
                     </span>
                   </TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-300">
-                    {quiz.date}
+                    {new Date(quiz.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Link href={"/quizzes/1"}>
+                    <Link href={`/quizzes/${quiz.id}`}>
                       <Button variant="outline" size="sm">
                         Analyze
                       </Button>
@@ -271,3 +268,5 @@ function getScoreColor(score, total) {
   if (percentage >= 40) return "text-yellow-600 dark:text-yellow-400";
   return "text-red-600 dark:text-red-400";
 }
+
+export default withAuth(AllQuizzesPage);

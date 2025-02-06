@@ -13,20 +13,77 @@ import {
   Youtube,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation"; //
 const AuthPage = () => {
+  const router = useRouter();
+  const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    user_name: "",
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    try {
+      const endpoint = isLogin
+        ? "https://ecommerce-backend-4cc1.onrender.com/user/login"
+        : "https://ecommerce-backend-4cc1.onrender.com/user/register";
+
+      const payload = isLogin
+        ? { email: formData.email, password: formData.password }
+        : {
+            user_name: formData.user_name,
+            email: formData.email,
+            password: formData.password,
+          };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", data.user.user_name);
+
+        toast({
+          title: "Authentication Successful",
+          description: isLogin
+            ? "Logged in successfully!"
+            : "Account created successfully!",
+          className: "bg-green-500 text-white border-none",
+        });
+
+        // Slight delay to show toast before redirecting
+        setTimeout(() => {
+          router.push("/");
+        }, 2000);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description:
+            data.message || "An error occurred during authentication.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to the server. Please try again.",
+      });
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -165,7 +222,7 @@ const AuthPage = () => {
                         name="name"
                         type="text"
                         required
-                        value={formData.name}
+                        value={formData.user_name}
                         onChange={handleInputChange}
                         className="appearance-none relative block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm bg-white dark:bg-gray-800"
                         placeholder="Full Name"
@@ -263,18 +320,16 @@ const AuthPage = () => {
 
               {/* Submit Button */}
               <div>
-                <Link href={"/"}>
-                  <button
-                    type="submit"
-                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-[#4173F2] hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                      <Lock className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" />
-                    </span>
-                    {isLogin ? "Sign in" : "Sign up"}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </button>
-                </Link>
+                <button
+                  type="submit"
+                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-[#4173F2] hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <Lock className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" />
+                  </span>
+                  {isLogin ? "Sign in" : "Sign up"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </button>
               </div>
             </form>
 
