@@ -15,12 +15,14 @@ import {
 import Image from "next/image";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation"; //
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 const AuthPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     user_name: "",
     email: "",
@@ -54,8 +56,7 @@ const AuthPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.user.user_name);
+        login(data.token, data.user.user_name);
 
         toast({
           title: "Authentication Successful",

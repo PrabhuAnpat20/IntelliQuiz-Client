@@ -3,7 +3,7 @@ import "./globals.css";
 import NavBar from "@/components/layout/NavBar";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/ThemeContext";
-
+import { AuthProvider } from "@/context/AuthContext";
 // Fonts
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,13 +26,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <ThemeProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F3F4F6] dark:bg-[#111827]`}
-        >
-          <NavBar />
-          <main>{children}</main>
-          <Toaster />
-        </body>
+        <AuthProvider>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F3F4F6] dark:bg-[#111827]`}
+          >
+            <NavBar />
+            <main>{children}</main>
+            <Toaster />
+          </body>
+        </AuthProvider>
       </ThemeProvider>
     </html>
   );

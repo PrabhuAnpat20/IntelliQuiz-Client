@@ -3,54 +3,45 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Command,
-  ChevronDown,
-  User,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { ChevronDown, User, LogOut, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import api from "@/api/api";
 import { useToast } from "@/hooks/use-toast";
-
+import { useAuth } from "@/context/AuthContext";
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
-
+  const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [token, setToken] = useState(null);
+  const [username, setUsername] = useState("User");
 
-  // Get username from local storage
-  const username = useState(() => {
+  // Fetch token and username from local storage on mount
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("username") || "User";
+      const storedToken = localStorage.getItem("token");
+      const storedUsername = localStorage.getItem("username") || "User";
+      setToken(storedToken);
+      setUsername(storedUsername);
     }
-    return "User";
-  })[0];
+  }, []);
 
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "My Quizes", href: "/myQuizes" },
+    { name: "My Quizzes", href: "/myQuizes" },
   ];
 
   const handleSignOut = async () => {
     try {
       setIsLoggingOut(true);
+      await api.delete("/user/signout");
 
-      const response = await api.delete("/user/signout");
-
-      if (typeof window !== "undefined") {
-        localStorage.clear();
-      }
+      logout();
 
       toast({
         title: "Logged Out Successfully",
@@ -58,6 +49,7 @@ const Navbar = () => {
         className: "bg-green-500 text-white border-none",
       });
 
+      logout();
       router.push("/auth");
     } catch (error) {
       console.error("Logout error:", error);
@@ -71,6 +63,8 @@ const Navbar = () => {
       if (typeof window !== "undefined") {
         localStorage.clear();
       }
+
+      setToken(null);
       router.push("/auth");
     } finally {
       setIsLoggingOut(false);
@@ -78,16 +72,16 @@ const Navbar = () => {
     }
   };
 
-  // Early return after all hooks are declared
+  // Hide Navbar on auth pages
   if (pathname === "/auth") {
     return null;
   }
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-md transition-colors duration-200 sticky top-0 z-50">
-      {/* Rest of the component remains the same */}
       <div className="mx-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          {/* Logo */}
           <div className="flex items-center mt-4">
             <Image src={"/logo.png"} width={300} height={50} alt="Logo" />
           </div>
@@ -120,29 +114,38 @@ const Navbar = () => {
               )}
             </button>
 
-            {/* Desktop Profile Menu */}
+            {/* Profile Menu OR Sign In Button */}
             <div className="ml-6 relative">
-              <button
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <img
-                  className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-gray-700"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt="Profile"
-                />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {username}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
-                    isProfileOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+              {user ? (
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <img
+                    className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-gray-700"
+                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                    alt="Profile"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {user.username}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${
+                      isProfileOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="text-sm font-medium text-gray-900 dark:text-gray-100 px-3 py-2"
+                >
+                  Sign In
+                </Link>
+              )}
 
               {/* Profile Dropdown */}
-              {isProfileOpen && (
+              {isProfileOpen && user && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
                   <Link
                     href="/profile"
@@ -164,7 +167,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={toggleTheme}
@@ -179,64 +182,13 @@ const Navbar = () => {
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors"
+              className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               {isMobileMenuOpen ? (
-                <X className="block h-6 w-6" />
+                <X className="h-6 w-6" />
               ) : (
-                <Menu className="block h-6 w-6" />
+                <Menu className="h-6 w-6" />
               )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      <div className={`md:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-        <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center px-5">
-            <div className="flex-shrink-0">
-              <img
-                className="h-10 w-10 rounded-full"
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                alt="Profile"
-              />
-            </div>
-            <div className="ml-3">
-              <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                {username}
-              </div>
-              <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {typeof window !== "undefined"
-                  ? localStorage.getItem("email") || "user@example.com"
-                  : "user@example.com"}
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 px-2 space-y-1">
-            <Link
-              href="/profile"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Your Profile
-            </Link>
-            <button
-              onClick={handleSignOut}
-              disabled={isLoggingOut}
-              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-            >
-              {isLoggingOut ? "Signing out..." : "Sign out"}
             </button>
           </div>
         </div>
