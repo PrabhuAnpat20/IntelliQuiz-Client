@@ -22,6 +22,8 @@ import {
 import Link from "next/link";
 import api from "@/api/api";
 import withAuth from "@/app/utils/isAuth";
+import { ClipboardX, Loader2 } from "lucide-react";
+
 function AllQuizzesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
@@ -93,8 +95,32 @@ function AllQuizzesPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <div className="text-red-500 dark:text-red-400 mb-4">
+              <svg
+                className="h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold text-red-600 dark:text-red-400 text-center">
+              {error}
+            </p>
+            <Button
+              className="mt-4"
+              onClick={() => window.location.reload()}
+              variant="outline"
+            >
+              Try Again
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -105,9 +131,10 @@ function AllQuizzesPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="bg-white dark:bg-gray-800">
-          <CardContent className="p-4">
-            <p className="text-gray-600 dark:text-gray-300">
-              Loading quizzes...
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500 dark:text-blue-400" />
+            <p className="mt-4 text-gray-600 dark:text-gray-300 text-lg">
+              Loading your quiz history...
             </p>
           </CardContent>
         </Card>
@@ -200,62 +227,93 @@ function AllQuizzesPage() {
 
       <Card className="bg-white dark:bg-gray-800">
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Topic
-                </TableHead>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Subtopic
-                </TableHead>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Test Type
-                </TableHead>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Score
-                </TableHead>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Date
-                </TableHead>
-                <TableHead className="text-gray-600 dark:text-gray-300">
-                  Action
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredQuizzes.map((quiz) => (
-                <TableRow key={quiz.id}>
-                  <TableCell className="text-gray-600 dark:text-gray-300">
-                    {quiz.topic}
-                  </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-300">
-                    {quiz.subTopic}
-                  </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-300">
-                    {quiz.testType}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={getScoreColor(quiz.score, quiz.totalQuestions)}
-                    >
-                      {quiz.score}/{quiz.totalQuestions}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-300">
-                    {new Date(quiz.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Link href={`/quizzes/${quiz.id}`}>
-                      <Button variant="outline" size="sm">
-                        Analyze
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {tableData.length > 0 ? (
+            <>
+              {filteredQuizzes.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Topic
+                      </TableHead>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Subtopic
+                      </TableHead>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Test Type
+                      </TableHead>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Score
+                      </TableHead>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Date
+                      </TableHead>
+                      <TableHead className="text-gray-600 dark:text-gray-300">
+                        Action
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredQuizzes.map((quiz) => (
+                      <TableRow key={quiz.id}>
+                        <TableCell className="text-gray-600 dark:text-gray-300">
+                          {quiz.topic}
+                        </TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-300">
+                          {quiz.subTopic}
+                        </TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-300">
+                          {quiz.testType}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={getScoreColor(
+                              quiz.score,
+                              quiz.totalQuestions
+                            )}
+                          >
+                            {quiz.score}/{quiz.totalQuestions}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-300">
+                          {new Date(quiz.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/quizzes/${quiz.id}`}>
+                            <Button variant="outline" size="sm">
+                              Analyze
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <ClipboardX className="h-16 w-16 text-gray-400 dark:text-gray-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    No Matching Quizzes
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                    Try adjusting your filters or search terms to find what
+                    you're looking for.
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <ClipboardX className="h-16 w-16 text-gray-400 dark:text-gray-600 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                No Quizzes Available
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                You haven't taken any quizzes yet. Start taking quizzes to build
+                your history!
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

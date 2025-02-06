@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import withAuth from "@/app/utils/isAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Calendar, Trophy } from "lucide-react";
+import { BarChart, Calendar, Trophy, ClipboardX } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import api from "@/api/api";
+
 function DashboardPage() {
   const [scores, setScores] = useState({
     totalQuizzes: 0,
@@ -31,8 +32,6 @@ function DashboardPage() {
           api.get("/analytics/generateScores"),
           api.get("/analytics/generateAnalytics"),
         ]);
-
-        // Directly access data without .json()
         setScores(scoresRes.data);
         setAnalytics(analyticsRes.data);
       } catch (error) {
@@ -54,14 +53,18 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
+      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent dark:border-blue-400"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            Loading your dashboard...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    // Rest of the component remains the same
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -104,21 +107,34 @@ function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {analytics.map((quiz) => (
-                      <QuizScoreCard
-                        key={quiz.id}
-                        quiz={{
-                          id: quiz.id,
-                          topic: quiz.topic,
-                          subtopic: quiz.subTopic,
-                          score: quiz.correctAnswers,
-                          total: quiz.totalQuestions,
-                          date: new Date(quiz.createdAt).toLocaleDateString(),
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {analytics.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {analytics.map((quiz) => (
+                        <QuizScoreCard
+                          key={quiz.id}
+                          quiz={{
+                            id: quiz.id,
+                            topic: quiz.topic,
+                            subtopic: quiz.subTopic,
+                            score: quiz.correctAnswers,
+                            total: quiz.totalQuestions,
+                            date: new Date(quiz.createdAt).toLocaleDateString(),
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <ClipboardX className="h-16 w-16 text-gray-400 dark:text-gray-600 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        No Quizzes Taken Yet
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                        Start taking quizzes to see your performance history and
+                        track your progress!
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               <Card className="flex-1 dark:bg-slate-800">
@@ -128,46 +144,59 @@ function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={performanceData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#374151"
-                          className="dark:opacity-50"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          stroke="#9CA3AF"
-                          tick={{ fill: "#9CA3AF" }}
-                        />
-                        <YAxis
-                          stroke="#9CA3AF"
-                          tick={{ fill: "#9CA3AF" }}
-                          domain={[0, 100]}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#1F2937",
-                            border: "none",
-                            borderRadius: "0.375rem",
-                            boxShadow:
-                              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                          }}
-                          itemStyle={{ color: "#E5E7EB" }}
-                          labelStyle={{ color: "#9CA3AF" }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#3B82F6"
-                          strokeWidth={2}
-                          dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                          activeDot={{ r: 6, fill: "#2563EB" }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {performanceData.length > 0 ? (
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={performanceData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#374151"
+                            className="dark:opacity-50"
+                          />
+                          <XAxis
+                            dataKey="date"
+                            stroke="#9CA3AF"
+                            tick={{ fill: "#9CA3AF" }}
+                          />
+                          <YAxis
+                            stroke="#9CA3AF"
+                            tick={{ fill: "#9CA3AF" }}
+                            domain={[0, 100]}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1F2937",
+                              border: "none",
+                              borderRadius: "0.375rem",
+                              boxShadow:
+                                "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                            }}
+                            itemStyle={{ color: "#E5E7EB" }}
+                            labelStyle={{ color: "#9CA3AF" }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="score"
+                            stroke="#3B82F6"
+                            strokeWidth={2}
+                            dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, fill: "#2563EB" }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <ClipboardX className="h-16 w-16 text-gray-400 dark:text-gray-600 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        No Performance Data
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                        Complete some quizzes to see your performance trends
+                        over time.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -178,7 +207,6 @@ function DashboardPage() {
   );
 }
 
-// StatCard and QuizScoreCard components remain the same
 function StatCard({ title, value, icon }) {
   return (
     <Card className="dark:bg-slate-800">
