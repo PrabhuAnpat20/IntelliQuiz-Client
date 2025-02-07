@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Brain, BookOpen, Youtube } from "lucide-react";
+import withAuth from "@/app/utils/isAuth";
 
-export default function GenerateQuizPage() {
+function GenerateQuizPage() {
   const router = useRouter();
 
   const handleCardClick = (formType) => {
@@ -85,3 +86,4 @@ export default function GenerateQuizPage() {
     </div>
   );
 }
+export default withAuth(GenerateQuizPage);

@@ -80,7 +80,6 @@ const Quiz = ({ testID, num }) => {
 
         setIsSubmitted(true);
         setDifficulty(currentQuestion.difficulty);
-        setQuestionCount((prevCount) => prevCount + 1);
       } catch (error) {
         console.error("Error submitting answer:", error);
       }
@@ -89,7 +88,7 @@ const Quiz = ({ testID, num }) => {
 
   const handleNextQuestion = async () => {
     // Check if this is the last question
-    if (questionCount + 1 >= num) {
+    if (questionCount + 1 == num) {
       await postTestResult();
       return;
     }
@@ -107,6 +106,7 @@ const Quiz = ({ testID, num }) => {
         setCurrentQuestion(nextQuestion);
         setSelectedAnswer(null);
         setIsSubmitted(false);
+        setQuestionCount((prevCount) => prevCount + 1);
       } else {
         await postTestResult();
       }
