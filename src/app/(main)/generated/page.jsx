@@ -3,14 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { FileDown, PenLine, Trophy } from "lucide-react";
 import Quiz from "@/components/Quiz/quiz";
-import { useSearchParams } from "next/navigation";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 function Generated() {
   const [startQuiz, setStartQuiz] = useState(false);
   const [quizData, setQuizData] = useState([]);
-  const searchParams = useSearchParams();
+
   const [testID, setTestID] = useState();
   const [num, setNum] = useState();
   useEffect(() => {
