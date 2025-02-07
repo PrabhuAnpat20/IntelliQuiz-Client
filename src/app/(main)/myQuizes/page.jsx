@@ -279,7 +279,7 @@ function AllQuizzesPage() {
                           {new Date(quiz.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Link href={`/quizzes/${quiz.id}`}>
+                          <Link href={`/quizzes/${quiz.testId}`}>
                             <Button variant="outline" size="sm">
                               Analyze
                             </Button>
