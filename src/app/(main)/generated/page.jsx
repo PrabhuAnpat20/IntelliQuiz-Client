@@ -1,14 +1,72 @@
+// pages/generated/page.jsx
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FileDown, PenLine, Trophy } from "lucide-react";
 import Quiz from "@/components/Quiz/quiz";
+import { useSearchParams } from "next/navigation";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 function Generated() {
   const [startQuiz, setStartQuiz] = useState(false);
+  const [quizData, setQuizData] = useState([]);
+  const searchParams = useSearchParams();
+  const [testID, setTestID] = useState();
+  const [num, setNum] = useState();
+  useEffect(() => {
+    const storedQuiz = localStorage.getItem("quizData");
+    if (storedQuiz) {
+      const data = JSON.parse(storedQuiz);
+      setQuizData(data.questions);
+      setNum(data.questions.length);
+      if (data.questions.length > 0) {
+        setTestID(data.questions[0].testId);
+      }
+    }
+  }, []);
 
   const handleDownloadPDF = () => {
-    // PDF download logic would go here
-    alert("PDF download functionality would be implemented here");
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Generated Quiz", 14, 20);
+    doc.setFontSize(12);
+
+    let y = 30; // Initial vertical position
+
+    quizData.forEach((q, index) => {
+      const questionText = `${index + 1}. ${q.question}`;
+      const splitQuestion = doc.splitTextToSize(questionText, 180); // Wrap text
+
+      if (y + splitQuestion.length * 7 > 280) {
+        doc.addPage(); // Add new page if content exceeds page height
+        y = 20;
+      }
+
+      doc.text(splitQuestion, 14, y);
+      y += splitQuestion.length * 7 + 4; // Adjust vertical space after question
+
+      q.options.forEach((option, idx) => {
+        const optionLabel = String.fromCharCode(65 + idx);
+        const optionText = `${optionLabel}. ${option}`;
+        const splitOption = doc.splitTextToSize(optionText, 170);
+
+        if (y + splitOption.length * 6 > 280) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.text(splitOption, 20, y);
+        y += splitOption.length * 6 + 2; // Adjust space after each option
+      });
+
+      const correctAnswer = `Correct Answer: ${String.fromCharCode(
+        65 + q.correctOption
+      )}`;
+      doc.text(correctAnswer, 20, y + 4);
+      y += 14; // Add extra space after each question block
+    });
+
+    doc.save("Generated_Quiz.pdf");
   };
 
   return (
@@ -51,7 +109,7 @@ function Generated() {
           </div>
         </div>
       ) : (
-        <Quiz />
+        <Quiz testID={testID} num={num} />
       )}
     </div>
   );
