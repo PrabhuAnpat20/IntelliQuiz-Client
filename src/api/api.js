@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const baseURL = "https://ecommerce-backend-4cc1.onrender.com";
+export const baseURL = "https://techfiesta-first.onrender.com";
 const api = axios.create({
   baseURL,
 });
