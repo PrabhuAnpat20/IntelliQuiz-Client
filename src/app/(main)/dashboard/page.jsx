@@ -24,7 +24,7 @@ import {
 } from "recharts";
 import api from "@/api/api";
 import Link from "next/link";
-import YoutubeForm from "@/components/QuizForms/YoutubeForm";
+
 function DashboardPage() {
   const [scores, setScores] = useState({
     totalQuizzes: 0,
@@ -260,6 +260,7 @@ function QuizScoreCard({ quiz }) {
           </h3>
           {quiz.testType === "custom" && <Settings />}
           {quiz.testType === "youtube" && <Youtube />}
+          {quiz.testType === "pdf" && <FileText />}
         </div>
         <h2>{quiz.subtopic}</h2>
         <h2>{}</h2>

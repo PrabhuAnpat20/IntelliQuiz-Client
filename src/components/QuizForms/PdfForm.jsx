@@ -3,18 +3,47 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import api from "@/api/api";
+
 export default function PdfForm() {
   const [pdfFile, setPdfFile] = useState(null);
   const [numQuestions, setNumQuestions] = useState("");
+  const [topic, setTopic] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Generating quiz from PDF:", pdfFile);
+
+    if (!pdfFile || !topic || !numQuestions) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+    formData.append("topics", JSON.stringify([topic]));
+    formData.append("num_questions", numQuestions);
+
+    try {
+      setLoading(true);
+      const response = await api.post("/pdf/process-pdf", formData);
+      localStorage.setItem("quizData", JSON.stringify(response.data));
+
+      router.push("/generated");
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      alert("Failed to generate quiz. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main className=" bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -24,8 +53,8 @@ export default function PdfForm() {
             PDF Quiz Generator
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Upload a PDF and specify the number of questions to generate a
-            custom quiz
+            Upload a PDF, specify the topic, and the number of questions to
+            generate a custom quiz
           </p>
         </div>
         <form onSubmit={handleSubmit}>
@@ -35,6 +64,15 @@ export default function PdfForm() {
               type="file"
               accept=".pdf"
               onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+            />
+          </div>
+          <div className="flex flex-col my-4">
+            <Label>Topic</Label>
+            <Input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Enter topic for the quiz"
             />
           </div>
           <div className="flex flex-col my-4">
@@ -49,15 +87,23 @@ export default function PdfForm() {
             />
           </div>
           <div className="flex justify-between mt-4">
-            <Button variant="outline" className="dark:bg-gray-600">
+            <Button variant="outline" className="dark:bg-gray-600" type="reset">
               Cancel
             </Button>
             <Button
               type="submit"
               variant="outline"
-              className="bg-[#4173F2] text-white dark:bg-[#315BB0]"
+              className="bg-[#4173F2] text-white dark:bg-[#315BB0] flex items-center"
+              disabled={loading}
             >
-              Generate Quiz
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5 mr-2" />{" "}
+                  Generating...
+                </>
+              ) : (
+                "Generate Quiz"
+              )}
             </Button>
           </div>
         </form>
