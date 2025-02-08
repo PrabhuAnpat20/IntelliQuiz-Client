@@ -9,7 +9,7 @@ import {
   Legend,
 } from "recharts";
 import ReactMarkdown from "react-markdown";
-const Quiz = ({ testID, num }) => {
+const RestartedQuiz = ({ testID, num, submittedCount }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -19,7 +19,7 @@ const Quiz = ({ testID, num }) => {
   const [timeTaken, setTimeTaken] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [questionCount, setQuestionCount] = useState(0);
+  const [questionCount, setQuestionCount] = useState(submittedCount);
   const [testResult, setTestResult] = useState(null);
   const [explanation, setExplanation] = useState(null);
   useEffect(() => {
@@ -319,4 +319,4 @@ const Quiz = ({ testID, num }) => {
   );
 };
 
-export default Quiz;
+export default RestartedQuiz;

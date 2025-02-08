@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import withAuth from "@/app/utils/isAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Calendar, Trophy, ClipboardX } from "lucide-react";
+import {
+  BarChart,
+  Calendar,
+  Trophy,
+  ClipboardX,
+  FileText,
+  Youtube,
+  Settings,
+} from "lucide-react";
+
 import {
   LineChart,
   Line,
@@ -14,7 +23,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import api from "@/api/api";
-
+import Link from "next/link";
+import YoutubeForm from "@/components/QuizForms/YoutubeForm";
 function DashboardPage() {
   const [scores, setScores] = useState({
     totalQuizzes: 0,
@@ -110,17 +120,22 @@ function DashboardPage() {
                   {analytics.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {analytics.map((quiz) => (
-                        <QuizScoreCard
-                          key={quiz.id}
-                          quiz={{
-                            id: quiz.id,
-                            topic: quiz.topic,
-                            subtopic: quiz.subTopic,
-                            score: quiz.correctAnswers,
-                            total: quiz.totalQuestions,
-                            date: new Date(quiz.createdAt).toLocaleDateString(),
-                          }}
-                        />
+                        <Link href={`/quizzes/${quiz.testId}`}>
+                          <QuizScoreCard
+                            key={quiz.id}
+                            quiz={{
+                              id: quiz.id,
+                              topic: quiz.topic,
+                              subtopic: quiz.subTopic,
+                              score: quiz.correctAnswers,
+                              total: quiz.totalQuestions,
+                              date: new Date(
+                                quiz.createdAt
+                              ).toLocaleDateString(),
+                              testType: quiz.testType,
+                            }}
+                          />
+                        </Link>
                       ))}
                     </div>
                   ) : (
@@ -239,9 +254,13 @@ function QuizScoreCard({ quiz }) {
   return (
     <Card className="dark:bg-gray-700 transition-colors duration-200 shadow-xl">
       <CardContent className="p-4">
-        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 truncate">
-          {quiz.topic}
-        </h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 truncate">
+            {quiz.topic}
+          </h3>
+          {quiz.testType === "custom" && <Settings />}
+          {quiz.testType === "youtube" && <Youtube />}
+        </div>
         <h2>{quiz.subtopic}</h2>
         <h2>{}</h2>
         <div className="flex justify-between items-center">

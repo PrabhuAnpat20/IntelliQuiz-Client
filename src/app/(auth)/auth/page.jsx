@@ -35,8 +35,8 @@ const AuthPage = () => {
 
     try {
       const endpoint = isLogin
-        ? "https://ecommerce-backend-4cc1.onrender.com/user/login"
-        : "https://ecommerce-backend-4cc1.onrender.com/user/register";
+        ? "https://techfiesta-first.onrender.com/user/login"
+        : "https://techfiesta-first.onrender.com/user/register";
 
       const payload = isLogin
         ? { email: formData.email, password: formData.password }

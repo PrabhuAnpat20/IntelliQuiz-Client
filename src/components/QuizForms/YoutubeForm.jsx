@@ -3,14 +3,34 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Youtube } from "lucide-react";
+import { Youtube, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import api from "@/api/api";
 export default function YoutubeForm() {
   const [youtubeLink, setYoutubeLink] = useState("");
   const [numQuestions, setNumQuestions] = useState("");
-
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Generating quiz from YouTube:", youtubeLink);
+    setLoading(true);
+    try {
+      const response = await api.post("/quiz/generateYouTubeQuiz", {
+        youtube_url: youtubeLink,
+        numberOfQuestions: numQuestions,
+      });
+      // toast.success("Quiz generated successfully!");
+      console.log("Generated Quiz:", response.data);
+      localStorage.setItem("quizData", JSON.stringify(response.data));
+      // localStorage.setItem("testID", JSON.stringify(response.data.qu));
+
+      router.push("/generated");
+    } catch (error) {
+      // toast.error("Failed to generate quiz. Please try again.");
+      console.error("Error generating quiz:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,9 +76,17 @@ export default function YoutubeForm() {
             <Button
               type="submit"
               variant="outline"
-              className="bg-[#4173F2] text-white dark:bg-[#315BB0]"
+              className="bg-[#4173F2] text-white dark:bg-[#315BB0] flex items-center"
+              disabled={loading}
             >
-              Generate Quiz
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5 mr-2" />{" "}
+                  Generating...
+                </>
+              ) : (
+                "Generate Quiz"
+              )}
             </Button>
           </div>
         </form>

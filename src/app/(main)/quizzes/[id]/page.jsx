@@ -1,6 +1,5 @@
 "use client";
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +11,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import api from "@/api/api";
+import ReactMarkdown from "react-markdown"; // Importing react-markdown
 
 export default function QuizAnalysisPage() {
   const params = useParams();
-  const [quiz, setQuizData] = useState();
+  const [quiz, setQuizData] = useState([]);
   const [loading, setIsLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +39,7 @@ export default function QuizAnalysisPage() {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
-  if (!quiz) return null;
+  if (!quiz.length) return null;
 
   return (
     <div className="container mx-auto px-4 md:px-28 py-8">
@@ -98,9 +98,11 @@ export default function QuizAnalysisPage() {
               <AccordionItem value="explanation">
                 <AccordionTrigger>View Explanation</AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {question.explanation || "Explanation not available"}
-                  </p>
+                  <div className="text-gray-700 dark:text-gray-300">
+                    <ReactMarkdown>
+                      {question.explanation || "Explanation not available"}
+                    </ReactMarkdown>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
