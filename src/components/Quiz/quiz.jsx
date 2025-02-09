@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
+  AlertTria,
 } from "recharts";
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ const Quiz = ({ testID, num }) => {
   const [explanation, setExplanation] = useState(null);
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-
+  const [review, setReview] = useState(false);
   useEffect(() => {
     startQuiz();
   }, []);
@@ -104,7 +105,17 @@ const Quiz = ({ testID, num }) => {
       }
     }
   };
+  const report = async () => {
+    const id = currentQuestion.id;
+    const response = await api.put(`/quiz/report/${id}`);
+    if (response) {
+      if (setReview) {
+        setReview(false);
+      }
 
+      setReview(true);
+    }
+  };
   const handleNextQuestion = async () => {
     // Check if this is the last question
     if (questionCount + 1 == num) {
@@ -115,6 +126,7 @@ const Quiz = ({ testID, num }) => {
     try {
       setIsLoading(true);
       setExplanation(null);
+      setReview(false);
       const response = await api.get(
         `/quiz/nextquestion?difficulty=${difficulty}&isCorrect=${
           isSubmitted ? 1 : 0
@@ -185,9 +197,7 @@ const Quiz = ({ testID, num }) => {
                   <p>
                     <strong>Percentage:</strong> {result.percentage}%
                   </p>
-                  <p>
-                    <strong>Test ID:</strong> {result.testId}
-                  </p>
+                  <p>{/* <strong>Test ID:</strong> {result.testId} */}</p>
                 </div>
               </div>
 
@@ -304,6 +314,14 @@ const Quiz = ({ testID, num }) => {
                 </div>
               </DialogContent>
             </Dialog>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" bg-yellow-200"
+              onClick={report}
+            >
+              {review ? <>Marked For review </> : <>Mark For Review</>}
+            </Button>
           </div>
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
