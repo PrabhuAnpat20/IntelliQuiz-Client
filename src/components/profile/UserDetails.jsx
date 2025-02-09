@@ -38,7 +38,7 @@ export default function UserDetails() {
           <p className="text-gray-600 dark:text-gray-300">{data?.email}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2  gap-9">
         <div className="flex items-center">
           <Calendar className="w-5 h-5 text-[#4173F2] dark:text-[#6B8FF2] mr-2" />
           <p className="text-gray-600 dark:text-gray-300">

@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+
 import {
   BookOpen,
   Youtube,
   Calendar,
   TrendingUp,
   AlertTriangle,
+  BarChart2,
+  Loader2,
 } from "lucide-react";
 import api from "@/api/api";
 
@@ -34,21 +36,24 @@ function App() {
     return match ? match[1] : "";
   };
 
-  if (loading) return <div className="text-center p-6">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen  w-full mt-0">
+        <div className="flex items-center space-x-4">
+          <BarChart2 className="w-12 h-12 text-blue-500 animate-pulse" />
+          <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
+          <p className="text-lg font-semibold text-gray-700 animate-pulse">
+            Analyzing Quiz Results...
+          </p>
+        </div>
+      </div>
+    );
+
   if (error) return <div className="text-center p-6 text-red-500">{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Quiz Analysis Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Your personalized learning journey for Units and Geometry
-          </p>
-        </div> */}
-
+      <div className=" mx-auto space-y-8">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-4">
