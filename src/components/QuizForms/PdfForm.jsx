@@ -3,23 +3,47 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Loader2 } from "lucide-react";
-import axios from "axios";
+import { BookOpen, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/api/api";
+
+const LoadingOverlay = () => (
+  <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl flex flex-col items-center space-y-4">
+      <div className="relative">
+        <BookOpen className="h-12 w-12 text-[#4173F2] dark:text-[#315BB0] animate-[flip_3s_ease-in-out_infinite]" />
+        <div className="absolute inset-0 bg-[#4173F2] dark:bg-[#315BB0] rounded-full animate-ping opacity-20"></div>
+      </div>
+      <p className="text-lg font-medium text-gray-900 dark:text-white">
+        Generating Your Quiz...
+      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Processing your PDF and creating questions
+      </p>
+    </div>
+  </div>
+);
 
 export default function PdfForm() {
   const [pdfFile, setPdfFile] = useState(null);
   const [numQuestions, setNumQuestions] = useState("");
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(""); // Reset error message
 
     if (!pdfFile || !topic || !numQuestions) {
-      alert("Please fill in all fields.");
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (pdfFile.size > 20 * 1024 * 1024) {
+      // Optional: 5MB file size limit
+      setError("File size should not exceed 5MB.");
       return;
     }
 
@@ -32,11 +56,22 @@ export default function PdfForm() {
       setLoading(true);
       const response = await api.post("/pdf/process-pdf", formData);
       localStorage.setItem("quizData", JSON.stringify(response.data));
-
       router.push("/generated");
     } catch (error) {
       console.error("Error generating quiz:", error);
-      alert("Failed to generate quiz. Please try again.");
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        setError(
+          error.response.data.message ||
+            "Failed to generate quiz. Please try again."
+        );
+      } else if (error.request) {
+        // Request was made but no response received
+        setError("Network error. Please check your connection.");
+      } else {
+        // Something went wrong in setting up the request
+        setError("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -44,6 +79,7 @@ export default function PdfForm() {
 
   return (
     <main className="bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      {loading && <LoadingOverlay />}
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -57,6 +93,14 @@ export default function PdfForm() {
             generate a custom quiz
           </p>
         </div>
+
+        {error && (
+          <div className="flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 dark:bg-red-800 dark:text-red-200">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-2">
             <Label>PDF File</Label>

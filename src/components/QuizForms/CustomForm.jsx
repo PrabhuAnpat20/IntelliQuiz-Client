@@ -14,7 +14,22 @@ import {
 } from "@/components/ui/select";
 import { Settings, Loader2 } from "lucide-react";
 import api from "@/api/api";
-import { useToast } from "@/hooks/use-toast";
+
+const LoadingOverlay = () => {
+  return (
+    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl flex flex-col items-center space-y-4">
+        <Settings className="h-12 w-12 text-[#4173F2] dark:text-[#315BB0] animate-spin" />
+        <p className="text-lg font-medium text-gray-900 dark:text-white">
+          Generating Your Quiz...
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Please wait while we prepare your questions
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const topics = [
   { id: "algebra", name: "Algebra" },
@@ -47,8 +62,9 @@ export default function CustomForm() {
   const [subtopic, setSubtopic] = useState("");
   const [numQuestions, setNumQuestions] = useState("");
   const [loading, setLoading] = useState(false);
-  const toast = useToast();
+
   const router = useRouter();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -58,16 +74,12 @@ export default function CustomForm() {
         subTopic: subtopic,
         numberOfQuestions: numQuestions,
       });
-      // toast.success("Quiz generated successfully!");
       console.log("Generated Quiz:", response.data);
       localStorage.setItem("quizData", JSON.stringify(response.data));
       localStorage.setItem("testID", JSON.stringify(response.data.qu));
 
-      setTimeout(() => {
-        router.push("/generated");
-      }, 2000);
+      router.push("/generated");
     } catch (error) {
-      // toast.error("Failed to generate quiz. Please try again.");
       console.error("Error generating quiz:", error);
     } finally {
       setLoading(false);
@@ -76,6 +88,7 @@ export default function CustomForm() {
 
   return (
     <main className="bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      {loading && <LoadingOverlay />}
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
