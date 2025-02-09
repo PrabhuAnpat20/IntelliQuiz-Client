@@ -1,4 +1,3 @@
-// pages/generated/page.jsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { FileDown, PenLine, Trophy } from "lucide-react";
@@ -9,9 +8,9 @@ import "jspdf-autotable";
 function Generated() {
   const [startQuiz, setStartQuiz] = useState(false);
   const [quizData, setQuizData] = useState([]);
-
   const [testID, setTestID] = useState();
   const [num, setNum] = useState();
+
   useEffect(() => {
     const storedQuiz = localStorage.getItem("quizData");
     if (storedQuiz) {
@@ -24,25 +23,25 @@ function Generated() {
     }
   }, []);
 
-  const handleDownloadPDF = () => {
+  const generateQuestionsPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
-    doc.text("Generated Quiz", 14, 20);
+    doc.text("Quiz Questions", 14, 20);
     doc.setFontSize(12);
 
-    let y = 30; // Initial vertical position
+    let y = 30;
 
     quizData.forEach((q, index) => {
       const questionText = `${index + 1}. ${q.question}`;
-      const splitQuestion = doc.splitTextToSize(questionText, 180); // Wrap text
+      const splitQuestion = doc.splitTextToSize(questionText, 180);
 
       if (y + splitQuestion.length * 7 > 280) {
-        doc.addPage(); // Add new page if content exceeds page height
+        doc.addPage();
         y = 20;
       }
 
       doc.text(splitQuestion, 14, y);
-      y += splitQuestion.length * 7 + 4; // Adjust vertical space after question
+      y += splitQuestion.length * 7 + 4;
 
       q.options.forEach((option, idx) => {
         const optionLabel = String.fromCharCode(65 + idx);
@@ -55,17 +54,43 @@ function Generated() {
         }
 
         doc.text(splitOption, 20, y);
-        y += splitOption.length * 6 + 2; // Adjust space after each option
+        y += splitOption.length * 6 + 2;
       });
 
-      const correctAnswer = `Correct Answer: ${String.fromCharCode(
-        65 + q.correctOption
-      )}`;
-      doc.text(correctAnswer, 20, y + 4);
-      y += 14; // Add extra space after each question block
+      y += 10; // Add extra space after each question block
     });
 
-    doc.save("Generated_Quiz.pdf");
+    doc.save("Quiz_Questions.pdf");
+  };
+
+  const generateAnswerKeyPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Answer Key", 14, 20);
+    doc.setFontSize(12);
+
+    // Create answer key table data
+    const tableData = quizData.map((q, index) => [
+      index + 1,
+      String.fromCharCode(65 + q.correctOption),
+      q.question.substring(0, 50) + (q.question.length > 50 ? "..." : ""), // truncate long questions
+    ]);
+
+    doc.autoTable({
+      startY: 30,
+      head: [["Question No.", "Correct Answer", "Question"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [65, 115, 242] }, // Using the blue color from your UI
+      styles: { overflow: "linebreak" },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: "auto" },
+      },
+    });
+
+    doc.save("Answer_Key.pdf");
   };
 
   return (
@@ -83,11 +108,11 @@ function Generated() {
                 </h1>
                 <p className="text-lg text-gray-600 dark:text-gray-300">
                   Your quiz has been generated successfully. You can now attempt
-                  the quiz or download it as PDF.
+                  the quiz or download the PDFs.
                 </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <button
                   onClick={() => setStartQuiz(true)}
                   className="flex items-center justify-center gap-2 px-6 py-3 text-white bg-[#4173F2] hover:bg-[#3461d1] rounded-lg transition-colors"
@@ -97,11 +122,19 @@ function Generated() {
                 </button>
 
                 <button
-                  onClick={handleDownloadPDF}
+                  onClick={generateQuestionsPDF}
                   className="flex items-center justify-center gap-2 px-6 py-3 text-[#4173F2] bg-[#4173F2]/10 hover:bg-[#4173F2]/20 rounded-lg transition-colors"
                 >
                   <FileDown className="w-5 h-5" />
-                  Download PDF
+                  Questions PDF
+                </button>
+
+                <button
+                  onClick={generateAnswerKeyPDF}
+                  className="flex items-center justify-center gap-2 px-6 py-3 text-[#4173F2] bg-[#4173F2]/10 hover:bg-[#4173F2]/20 rounded-lg transition-colors"
+                >
+                  <FileDown className="w-5 h-5" />
+                  Answer Key
                 </button>
               </div>
             </div>

@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -200,28 +200,6 @@ const AllQuizzesPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="mb-6 bg-white dark:bg-gray-800">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <label
-                htmlFor="search"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Search
-              </label>
-              <Input
-                id="search"
-                placeholder="Search quizzes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <CollapsibleQuizSection
         title="YouTube Quizzes"
         icon={<Youtube className="h-6 w-6 text-red-500" />}
