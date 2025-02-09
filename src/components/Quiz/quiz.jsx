@@ -9,6 +9,18 @@ import {
   Legend,
 } from "recharts";
 import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
 const Quiz = ({ testID, num }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -22,6 +34,9 @@ const Quiz = ({ testID, num }) => {
   const [questionCount, setQuestionCount] = useState(0);
   const [testResult, setTestResult] = useState(null);
   const [explanation, setExplanation] = useState(null);
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+
   useEffect(() => {
     startQuiz();
   }, []);
@@ -204,6 +219,7 @@ const Quiz = ({ testID, num }) => {
       </div>
     );
   };
+
   const getOptionClassName = (index) => {
     if (!isSubmitted) {
       return `w-full p-4 text-left rounded-lg transition-colors ${
@@ -226,6 +242,15 @@ const Quiz = ({ testID, num }) => {
     }
 
     return "w-full p-4 text-left rounded-lg transition-colors bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
+  };
+
+  const handlePause = () => {
+    setOpen(true);
+  };
+
+  const handleConfirmPause = () => {
+    router.push("/");
+    setOpen(false);
   };
 
   if (isLoading) {
@@ -254,6 +279,32 @@ const Quiz = ({ testID, num }) => {
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div className="flex justify-end">
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  Pause Test
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action will pause the test and redirect you to the home
+                    page.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="ghost" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" onClick={handleConfirmPause}>
+                    Confirm
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm text-gray-500 dark:text-gray-400">
